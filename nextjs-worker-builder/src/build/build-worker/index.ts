@@ -27,7 +27,7 @@ export async function buildWorker(
 	console.log({ repoRoot });
 
 	const workerEntrypoint = `${__dirname}/templates/worker.ts`;
-	const workerOutputFile = `${outputDir}/index.mjs`;
+	const workerOutputFile = `${outputDir}/assets/_worker.js`;
 	const nextConfigStr =
 		readFileSync(nextjsAppPaths.standaloneAppDir + "/server.js", "utf8")?.match(
 			/const nextConfig = ({.+?})\n/

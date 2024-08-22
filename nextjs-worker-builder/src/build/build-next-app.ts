@@ -28,6 +28,9 @@ function runNextBuildCommand(
 			// equivalent to: https://github.com/sst/open-next/blob/f61b0e9/packages/open-next/src/build.ts#L168-L173
 			// Equivalent to setting `target: "standalone"` in next.config.js
 			NEXT_PRIVATE_STANDALONE: "true",
+			NEXT_PRIVATE_MINIMAL_MODE: "true",
+			NEXT_RUNTIME: "nodejs",
+			NODE_ENV: "production",
 		},
 	});
 }
