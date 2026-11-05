@@ -1,5 +1,5 @@
 import { NextjsAppPaths } from "../../nextjsPaths";
-import { build, Plugin } from "esbuild";
+import { build, BuildOptions, Plugin } from "esbuild";
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { cp, readFile, writeFile } from "node:fs/promises";
 
@@ -34,7 +34,7 @@ export async function buildWorker(
 		)?.[1] ?? {};
 
 	console.log(`\x1b[35m⚙️ Bundling the worker file...\n\x1b[0m`);
-	await build({
+	const buildOptions: BuildOptions = {
 		entryPoints: [workerEntrypoint],
 		bundle: true,
 		outfile: workerOutputFile,
@@ -95,11 +95,22 @@ export async function buildWorker(
 				globalThis.__dirname ??= "";
 			`,
 		},
-	});
+	};
+	await build(buildOptions);
 
 	await updateWorkerBundledCode(workerOutputFile, nextjsAppPaths);
 
-	updateWebpackChunksFile(nextjsAppPaths);
+	await updateWebpackChunksFile(nextjsAppPaths);
+
+	// The patches add imports from the standalone app after the initial bundle.
+	// Bundle them with the same shims because Pages does not support Wrangler aliases.
+	await build({
+		...buildOptions,
+		entryPoints: [workerOutputFile],
+		allowOverwrite: true,
+	});
+	const bundledCode = await readFile(workerOutputFile, "utf8");
+	await writeFile(workerOutputFile, patchRequire(bundledCode));
 
 	console.log(`\x1b[35m⚙️ Copying asset files...\n\x1b[0m`);
 	await cp(`${nextjsAppPaths.dotNextDir}/static`, `${outputDir}/assets/_next`, {
@@ -139,10 +150,9 @@ async function updateWorkerBundledCode(
 /**
  * Fixes the webpack-runtime.js file by removing its webpack dynamic requires.
  *
- * This hack is especially bad for two reasons:
- *  - it requires setting `experimental.serverMinification` to `false` in the app's config file
- *  - indicates that files inside the output directory still get a hold of files from the outside: `${nextjsAppPaths.standaloneAppServerDir}/webpack-runtime.js`
- *    so this shows that not everything that's needed to deploy the application is in the output directory...
+ * This hack requires setting `experimental.serverMinification` to `false` in the app's config file
+ * because the replacements rely on the webpack runtime's original variable names.
+ * The updated chunks are included in the final worker bundle.
  */
 async function updateWebpackChunksFile(nextjsAppPaths: NextjsAppPaths) {
 	const webpackRuntimeFile = `${nextjsAppPaths.standaloneAppServerDir}/webpack-runtime.js`;
