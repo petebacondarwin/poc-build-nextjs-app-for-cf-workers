@@ -1,9 +1,9 @@
 &nbsp;&nbsp;&nbsp; ⚠️ &nbsp;&nbsp;&nbsp; ⚠️ &nbsp;&nbsp;&nbsp; ⚠️
+
 > [!WARNING]
 > Repo archived in favour of https://github.com/flarelabs-net/poc-next
 
 &nbsp;&nbsp;&nbsp; ⚠️ &nbsp;&nbsp;&nbsp; ⚠️ &nbsp;&nbsp;&nbsp; ⚠️
-
 
 # [POC] Build Next.js app for cf workers
 
